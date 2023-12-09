@@ -14,6 +14,8 @@ Lisa Graph, a robust Django-powered GraphQL API, facilitates seamless querying o
    python manage.py runserver
    ```
 
+## NOTE: CHANGE THE DATABASE CONFIGURATIONS IN THE ```settings.py``` file
+### WILL SOON PROVIDE ACCESS TO A PUBLIC DEVELOPMENT DATABASE
 ## Query
 
 ### Retrieve Data
