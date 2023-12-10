@@ -10,14 +10,14 @@ class StockDataType(DjangoObjectType):
 
 	class Meta:
 		model = StockData
-		date = graphene.String()
-		bid_qty = graphene.String()
-		ask_qty = graphene.String()
-		last_traded_size = graphene.String()
-		total_trades = graphene.String()
-		trade_volume = graphene.String()
-		foreign_buys = graphene.String()
-		foreign_sells = graphene.String()
+	date = graphene.String()
+	bid_qty = graphene.String()
+	ask_qty = graphene.String()
+	last_traded_size = graphene.String()
+	total_trades = graphene.String()
+	trade_volume = graphene.String()
+	foreign_buys = graphene.String()
+	foreign_sells = graphene.String()
 
 class Query(graphene.ObjectType):
 	stock_data = graphene.List(StockDataType, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String())
