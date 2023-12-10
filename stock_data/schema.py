@@ -46,9 +46,9 @@ class Query(graphene.ObjectType):
 
 	def resolve_top_movers(self, info, n=None, net=False):
 		if net:
-			data = StockData.objects.all('-net_change')
+			data = StockData.objects.order_by('-net_change')
 		else:
-			data = StockData.objects.all('-change')
+			data = StockData.objects.order_by('-change')
 
 		if n is not None:
 			return data[:n]
