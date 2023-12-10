@@ -2,3 +2,4 @@ Django
 django-filter
 graphene-django
 django-graphql-jwt
+psycopg2-binary
