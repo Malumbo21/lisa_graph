@@ -1,5 +1,7 @@
 # Lisa Graph API Documentation
-
+<div style="display:flex; align-items: center;width: 100%;">
+  <img src="/assets/logo.png" alt="LISA GRAPH"/>
+</div>
 Lisa Graph, a robust Django-powered GraphQL API, facilitates seamless querying of Lusaka Stock Exchange data. The API offers a single query with optional filters (start, end, single_date, date) that fetches data in descending order by default.
 
 ## Getting Started
