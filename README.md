@@ -44,11 +44,13 @@ query {
 - ✔️ Implemented single GraphQL query.
 - ✔️ Added optional date filters.
 - ✔️ Data retrieval in descending order by default.
-
+- ✔️ User authentication using JWT tokens.
 ## Future Work
 
-- ☑️ Implement pagination for large result sets.
-- ☑️ Enhance user authentication using JWT tokens.
+- ☑️ Add support for news data from diffrent news platforms.
+- ☑️ AI finance forecasts.
+- ☑️ Blogging feature.
+- ☑️ Forums.
 
 ### WOULD LOVE TO SEE YOUR PARTICIPATION IN THIS PROJECT
 ### FORK THE REPO AND ADD YOUR UPDATES WILL REVIEW AND ADD AS SOON AS POSSIBLE
