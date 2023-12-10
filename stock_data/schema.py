@@ -54,7 +54,7 @@ class Query(graphene.ObjectType):
 			return data[:n]
 		else:
 			return data[:5]
-	def resolve_top_losers(self, info, n=None):
+	def resolve_top_losers(self, info, n=None, net=False):
 		if net:
 			data = StockData.objects.order_by('net_change')
 		else:
