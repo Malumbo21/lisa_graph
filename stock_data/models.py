@@ -1,6 +1,6 @@
 from django.db import models
 
-class StockData(models.Model):
+class StockDataV2(models.Model):
 	instrument = models.CharField(max_length=255, db_index=True)
 	bid_qty = models.IntegerField()
 	bid_price = models.FloatField()
