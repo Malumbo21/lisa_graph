@@ -1,30 +1,21 @@
 import graphene
 from datetime import datetime
-from stock_data.models import StockData
+from stock_data.models import StockDataV2
 from django.db import models
 from django.db.models.functions import Cast
 from django.db.models import F, Value
 from graphene_django import DjangoObjectType
 
-class StockDataType(DjangoObjectType):
+class StockDataV2Type(DjangoObjectType):
 
 	class Meta:
-		model = StockData
-	date = graphene.String()
-	bid_qty = graphene.String()
-	ask_qty = graphene.String()
-	last_traded_size = graphene.String()
-	total_trades = graphene.String()
-	trade_volume = graphene.String()
-	foreign_buys = graphene.String()
-	foreign_sells = graphene.String()
-
+		model = StockDataV2
 class Query(graphene.ObjectType):
-	stock_data = graphene.List(StockDataType, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String())
-	top_movers = graphene.List(StockDataType, n=graphene.Int(), net=graphene.Boolean())
-	top_losers = graphene.List(StockDataType, n=graphene.Int(), net=graphene.Boolean())
+	stock_data = graphene.List(StockDataV2Type, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String())
+	top_movers = graphene.List(StockDataV2Type, n=graphene.Int(), net=graphene.Boolean())
+	top_losers = graphene.List(StockDataV2Type, n=graphene.Int(), net=graphene.Boolean())
 	def resolve_stock_data(self, info, start=None, end=None, symbol=None, single_date=False, date=None):
-		data = StockData.objects.all()
+		data = StockDataV2.objects.all()
 		if symbol:
 			data = data.filter(instrument=symbol)
 		if single_date:
@@ -46,9 +37,9 @@ class Query(graphene.ObjectType):
 
 	def resolve_top_movers(self, info, n=None, net=False):
 		if net:
-			data = StockData.objects.order_by('-net_change')
+			data = StockDataV2.objects.order_by('-net_change')
 		else:
-			data = StockData.objects.order_by('-change')
+			data = StockDataV2.objects.order_by('-change')
 
 		if n is not None:
 			return data[:n]
@@ -56,9 +47,9 @@ class Query(graphene.ObjectType):
 			return data[:5]
 	def resolve_top_losers(self, info, n=None, net=False):
 		if net:
-			data = StockData.objects.order_by('net_change')
+			data = StockDataV2.objects.order_by('net_change')
 		else:
-			data = StockData.objects.order_by('change')
+			data = StockDataV2.objects.order_by('change')
 		if n is not None:
 			return data[:n]
 		else:
