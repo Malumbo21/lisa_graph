@@ -86,4 +86,4 @@ class Query(graphene.ObjectType):
 		if n is not None:
 			return data.order_by('price_diff')[:n]
 		else:
-			return data.order_by()'price_diff')[:5]
+			return data.order_by('price_diff')[:5]
