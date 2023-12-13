@@ -61,6 +61,7 @@ class Query(graphene.ObjectType):
 	        )
 	    )
 
+
 	    if n is not None:
 	        return data.order_by('-price_diff')[:n]
 	    else:
