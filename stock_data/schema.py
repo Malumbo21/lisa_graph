@@ -12,7 +12,7 @@ class StockDataV2Type(DjangoObjectType):
 		model = StockDataV2
 class Query(graphene.ObjectType):
 	stock_data = graphene.List(StockDataV2Type, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String())
-	top_gainers = graphene.List(StockDataV2Type, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean())
+	top_gainers = graphene.List(StockDataV2Type, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean(), date=graphene.String())
 	top_losers = graphene.List(StockDataV2Type, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean())
 	def resolve_stock_data(self, info, start=None, end=None, symbol=None, single_date=False, date=None):
 		data = StockDataV2.objects.all()
@@ -35,13 +35,15 @@ class Query(graphene.ObjectType):
 				data = data.filter(date__lte=endtime)
 		return data
 
-	def resolve_top_movers(self, info, n=None, day=False, week=False, month=False, year=False):
+	def resolve_top_movers(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
 	    if not any([day, week, month, year]):
 	        raise Exception("Error: Set at least one of the timeframe options (day, week, month, year) to True")
 
 	    date = StockDataV2.objects.aggregate(Max('date'))['date__max']
 
 	    if day:
+	    	if date is None:
+	    		raise Exception("date not provided")
 	        data = StockDataV2.objects.filter(date=date)
 	    elif week:
 	        start_of_week = date - timedelta(days=date.weekday())
