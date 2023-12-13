@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from stock_data.models import StockDataV2
 from django.db import models
 from django.db.models.functions import Cast, Lag
-from django.db.models import F, Value, Max, Q, ExpressionWrapper, fields
+from django.db.models import F, Value, Max, Q, ExpressionWrapper, fields, Window
 from graphene_django import DjangoObjectType
 
 class StockDataV2Type(DjangoObjectType):
@@ -42,8 +42,6 @@ class Query(graphene.ObjectType):
 	    date = StockDataV2.objects.aggregate(Max('date'))['date__max']
 
 	    if day:
-	        if date is None:
-	            raise Exception("date not provided")
 	        data = StockDataV2.objects.filter(date=date)
 	    elif week:
 	        start_of_week = date - timedelta(days=date.weekday())
@@ -54,13 +52,13 @@ class Query(graphene.ObjectType):
 	    elif year:
 	        data = StockDataV2.objects.filter(date__year=date.year)
 
+	    window = Window(partition_by='instrument', order_by=F('date').desc())
 	    data = data.annotate(
 	        price_diff=ExpressionWrapper(
-	            F('closing_price') - Lag('closing_price', default=Value(F('closing_price')), partition_by=F('instrument')).over(order_by=F('-date')),
+	            F('closing_price') - Lag('closing_price', default=Value(F('closing_price'))).over(window),
 	            output_field=fields.DecimalField()
 	        )
 	    )
-
 
 	    if n is not None:
 	        return data.order_by('-price_diff')[:n]
