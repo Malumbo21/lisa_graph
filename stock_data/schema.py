@@ -36,32 +36,11 @@ class Query(graphene.ObjectType):
 		return data
 
 	def resolve_top_movers(self, info, n=None, day=False, week=False, month=False, year=False):
-		if [day, week, month, year] == [False, False, False, False]:
-			raise Exception("Error set one on the timeframe options (day, week, month, year) to True")
-		if day == True:
-			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
-			data = StockDataV2.objects.filter(date=date).distinct('instrument')
-		if week == True:
-			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
-			start_of_week = date - timedelta(days=date.weekday())
-			end_of_week = date + timedelta(days=6)
-			data = StockDataV2.objects.filter(Q(date__range=[start_of_week, end_of_week]) | Q(date__week_day=date.weekday() + 1)).distinct('instrument')
-		if month == True:
-			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
-			data = StockDataV2.objects.filter(Q(date__month=date.month, date__year=date.year)).distinct('instrument')
-		if year == True:
-			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
-			data = StockDataV2.objects.filter(Q(date__year=date.year)).distinct('instrument')
+		data = StockDataV2.objects.all().distinct('instrument')
 		data = data.annonate(price_diff = ExpressionWrapper(
 			F('closing_price') - Lag('closing_price', default=F('closing_price'), partition_by=F('instrument')).over(order_by=F('-date')),
 			output_field=fields.DecimalField(),
 			))
-
-		if n is not None:
-			return data.order_by('-price_diff')[:n]
-		else:
-			return data.order_by('-price_diff')[:5]
-	def resolve_top_losers(self, info, n=None, day=False, week=False, month=False, year=False):
 		if [day, week, month, year] == [False, False, False, False]:
 			raise Exception("Error set one on the timeframe options (day, week, month, year) to True")
 		if day == True:
@@ -83,6 +62,32 @@ class Query(graphene.ObjectType):
 			output_field=fields.DecimalField(),
 			))
 
+		if n is not None:
+			return data.order_by('-price_diff')[:n]
+		else:
+			return data.order_by('-price_diff')[:5]
+	def resolve_top_losers(self, info, n=None, day=False, week=False, month=False, year=False):
+		data = StockDataV2.objects.all().distinct('instrument')
+		data = data.annonate(price_diff = ExpressionWrapper(
+			F('closing_price') - Lag('closing_price', default=F('closing_price'), partition_by=F('instrument')).over(order_by=F('-date')),
+			output_field=fields.DecimalField(),
+			))
+		if [day, week, month, year] == [False, False, False, False]:
+			raise Exception("Error set one on the timeframe options (day, week, month, year) to True")
+		if day == True:
+			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+			data = StockDataV2.objects.filter(date=date)
+		if week == True:
+			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+			start_of_week = date - timedelta(days=date.weekday())
+			end_of_week = date + timedelta(days=6)
+			data = StockDataV2.objects.filter(Q(date__range=[start_of_week, end_of_week]) | Q(date__week_day=date.weekday() + 1))
+		if month == True:
+			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+			data = StockDataV2.objects.filter(Q(date__month=date.month, date__year=date.year))
+		if year == True:
+			date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+			data = StockDataV2.objects.filter(Q(date__year=date.year))
 		if n is not None:
 			return data.order_by('price_diff')[:n]
 		else:
