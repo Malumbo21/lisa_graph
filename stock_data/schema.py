@@ -31,7 +31,7 @@ class FluctuationType(graphene.ObjectType):
     total_price_diff = graphene.Float()
     date = graphene.Date()
 class Query(graphene.ObjectType):
-    stock_data = graphene.List(StockDataV2Type, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String())
+    stock_data = graphene.List(StockDataV2Type, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String(), latest=graphene.Boolean())
     instruments = graphene.List(graphene.String)
     top_gainers = graphene.List(StockDataChangeType, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean(), date=graphene.String())
     top_losers = graphene.List(StockDataChangeType, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean())
@@ -150,8 +150,13 @@ class Query(graphene.ObjectType):
             weekly_high_low_data = sorted(weekly_high_low_data, key=lambda x: x['weekly_high'] - x['weekly_low'], reverse=True)[:n]
 
         return weekly_high_low_data
-    def resolve_stock_data(self, info, start=None, end=None, symbol=None, single_date=False, date=None):
+    def resolve_stock_data(self, info, start=None, end=None, symbol=None, single_date=False, date=None, latest=False):
         data = StockDataV2.objects.all()
+
+        if latest:
+            latest_date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+            data = data.filter(date=latest_date)
+
         if symbol:
             data = data.filter(instrument=symbol)
         if single_date:
@@ -169,8 +174,8 @@ class Query(graphene.ObjectType):
             if start is None:
                 endtime = datetime.strptime(end, "%Y-%m-%d").date()
                 data = data.filter(date__lte=endtime)
-        return data
 
+        return data
     def resolve_top_gainers(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
         instruments = StockDataV2.objects.values("instrument").distinct()
         instrument_names = [item["instrument"] for item in instruments]
