@@ -22,7 +22,68 @@ class Query(graphene.ObjectType):
         month=graphene.Int(),
         n=graphene.Int()
     )
+    changes = graphene.List(
+        StockDataV2Type,
+        instrument=graphene.String(),
+        year=graphene.Int(),
+        month=graphene.Int(),
+        week=graphene.Int(),
+        n=graphene.Int()
+    )
 
+    def resolve_changes(self, info, instrument=None, year=None, month=None, week=None, n=None):
+        # Filtering based on the given instrument, year, month, and week
+        data = StockDataV2.objects.all()
+        if instrument:
+            data = data.filter(instrument=instrument)
+        if year:
+            data = data.filter(date__year=year)
+        if month:
+            data = data.filter(date__month=month)
+        if week:
+            data = data.filter(date__week=week)
+
+        # Calculate the start and end dates dynamically
+        window = Window(partition_by='instrument', order_by=F('date').asc())
+        data = data.annotate(
+            start_date=Min('date'),
+            end_date=Max('date')
+        )
+
+        # Calculate the price difference for each timeframe
+        data = data.annotate(
+            price_diff=ExpressionWrapper(
+                F('closing_price') - Lag('closing_price', default=Value(F('closing_price'))).over(window),
+                output_field=fields.DecimalField()
+            )
+        )
+
+        # Get the changes for each timeframe
+        changes_data = []
+        if n is not None:
+            # Get the top N differences
+            data = data.order_by('-price_diff')[:n]
+
+        # Group data by start_date and end_date
+        grouped_data = data.order_by('start_date', 'end_date').values('start_date', 'end_date').annotate(
+            timeframe_start=Min('date'),
+            timeframe_end=Max('date'),
+            total_change=ExpressionWrapper(
+                F('closing_price') - Lag('closing_price', default=Value(F('closing_price'))).over(window),
+                output_field=fields.DecimalField()
+            )
+        )
+
+        for record in grouped_data:
+            changes_data.append({
+                'start_date': record['start_date'],
+                'end_date': record['end_date'],
+                'timeframe_start': record['timeframe_start'],
+                'timeframe_end': record['timeframe_end'],
+                'total_change': record['total_change'],
+            })
+
+        return changes_data
     def resolve_weekly_high_low(self, info, instrument=None, year=None, month=None, n=None):
         # Filtering based on the given instrument, year, and month
         data = StockDataV2.objects.all()
