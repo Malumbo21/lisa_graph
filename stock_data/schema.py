@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from stock_data.models import StockDataV2
 from django.db import models
 from django.db.models.functions import Lag, Min, Max, ExpressionWrapper, fields, TruncDate
-from django.db.models import F, Value, Max, Q, ExpressionWrapper, fields, Window, ExtractWeek, ExtractMonth, ExtractYear
+from django.db.models import F, Value, Window, ExtractWeek, ExtractMonth, ExtractYear
+
 from graphene_django import DjangoObjectType
 
 class StockDataV2Type(DjangoObjectType):
@@ -15,21 +16,8 @@ class Query(graphene.ObjectType):
     instruments = graphene.List(graphene.String)
     top_gainers = graphene.List(StockDataV2Type, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean(), date=graphene.String())
     top_losers = graphene.List(StockDataV2Type, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean())
-    weekly_high_low = graphene.List(
-        StockDataV2Type,
-        instrument=graphene.String(),
-        year=graphene.Int(),
-        month=graphene.Int(),
-        n=graphene.Int()
-    )
-    changes = graphene.List(
-        StockDataV2Type,
-        instrument=graphene.String(),
-        year=graphene.Int(),
-        month=graphene.Int(),
-        week=graphene.Int(),
-        n=graphene.Int()
-    )
+    weekly_high_low = graphene.List(StockDataV2Type, instrument=graphene.String(), year=graphene.Int(), month=graphene.Int(), n=graphene.Int())
+    changes = graphene.List(StockDataV2Type, instrument=graphene.String(), year=graphene.Int(), month=graphene.Int(), week=graphene.Int(), n=graphene.Int())
 
     def resolve_changes(self, info, instrument=None, year=None, month=None, week=None, n=None):
         # Filtering based on the given instrument, year, month, and week
@@ -84,6 +72,7 @@ class Query(graphene.ObjectType):
             })
 
         return changes_data
+
     def resolve_weekly_high_low(self, info, instrument=None, year=None, month=None, n=None):
         # Filtering based on the given instrument, year, and month
         data = StockDataV2.objects.all()
@@ -135,6 +124,7 @@ class Query(graphene.ObjectType):
             })
 
         return weekly_high_low_data
+
     def resolve_stock_data(self, info, start=None, end=None, symbol=None, single_date=False, date=None):
         data = StockDataV2.objects.all()
         if symbol:
