@@ -2,8 +2,8 @@ import graphene
 from datetime import datetime, timedelta
 from stock_data.models import StockDataV2
 from django.db import models
-from django.db.models.functions import Cast, Lag
-from django.db.models import F, Value, Max, Q, ExpressionWrapper, fields, Window
+from django.db.models.functions import Lag, Min, Max, ExpressionWrapper, fields, TruncDate
+from django.db.models import F, Value, Max, Q, ExpressionWrapper, fields, Window, ExtractWeek, ExtractMonth, ExtractYear
 from graphene_django import DjangoObjectType
 
 class StockDataV2Type(DjangoObjectType):
