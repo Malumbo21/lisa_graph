@@ -101,4 +101,4 @@ class Query(graphene.ObjectType):
 
         instrument_names = [item["instrument"] for item in instruments]
 
-        return instrument_names
+        return list(set(instrument_names))
