@@ -15,7 +15,65 @@ class Query(graphene.ObjectType):
     instruments = graphene.List(graphene.String)
     top_gainers = graphene.List(StockDataV2Type, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean(), date=graphene.String())
     top_losers = graphene.List(StockDataV2Type, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean())
+    weekly_high_low = graphene.List(
+        StockDataV2Type,
+        instrument=graphene.String(),
+        year=graphene.Int(),
+        month=graphene.Int(),
+        n=graphene.Int()
+    )
 
+    def resolve_weekly_high_low(self, info, instrument=None, year=None, month=None, n=None):
+        # Filtering based on the given instrument, year, and month
+        data = StockDataV2.objects.all()
+        if instrument:
+            data = data.filter(instrument=instrument)
+        if year:
+            data = data.filter(date__year=year)
+        if month:
+            data = data.filter(date__month=month)
+
+        # Calculate the start of the week dynamically
+        window = Window(partition_by='instrument', order_by=F('date').asc())
+        data = data.annotate(
+            week_start=ExpressionWrapper(
+                F('date') - ExtractWeek(F('date')) * Value(timedelta(days=1)),
+                output_field=fields.DateField()
+            )
+        )
+
+        # Calculate the price difference for each week
+        data = data.annotate(
+            price_diff=ExpressionWrapper(
+                F('closing_price') - Lag('closing_price', default=Value(F('closing_price'))).over(window),
+                output_field=fields.DecimalField()
+            )
+        )
+
+        # Get the weekly high and low
+        weekly_high_low_data = []
+        if n is not None:
+            # Get the top N weekly differences
+            data = data.order_by('-price_diff')[:n]
+
+        # Group data by week_start and get the first and last records for each week
+        grouped_data = data.order_by('week_start').values('week_start').annotate(
+            first_record=Min('date'),
+            last_record=Max('date'),
+            weekly_high=Max('closing_price'),
+            weekly_low=Max('closing_price'),
+        )
+
+        for record in grouped_data:
+            weekly_high_low_data.append({
+                'week_start': record['week_start'],
+                'first_record': record['first_record'],
+                'last_record': record['last_record'],
+                'weekly_high': record['weekly_high'],
+                'weekly_low': record['weekly_low'],
+            })
+
+        return weekly_high_low_data
     def resolve_stock_data(self, info, start=None, end=None, symbol=None, single_date=False, date=None):
         data = StockDataV2.objects.all()
         if symbol:
