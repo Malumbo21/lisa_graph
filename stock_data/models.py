@@ -23,5 +23,5 @@ class StockData(models.Model):
 	date = models.DateField()
 
 	class Meta:
-		db_table = 'stock_data_v2'
+		db_table = 'stock_data'
 		ordering = ('-date',)
