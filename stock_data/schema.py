@@ -1,16 +1,16 @@
 import traceback
 import graphene
 from datetime import datetime, timedelta
-from stock_data.models import StockDataV2
+from stock_data.models import StockData
 from django.db import models
 from django.db.models.functions import Lag, TruncDate, ExtractWeek, ExtractMonth, ExtractYear, FirstValue
 from django.db.models import F, Value, Window, Min, Max, ExpressionWrapper, fields, OuterRef, Subquery, Q, Sum
 
 from graphene_django import DjangoObjectType
 
-class StockDataV2Type(DjangoObjectType):
+class StockDataType(DjangoObjectType):
     class Meta:
-        model = StockDataV2
+        model = StockData
 class WeeklyHighLowType(graphene.ObjectType):
     week_start = graphene.String()
     week_end = graphene.String()
@@ -31,7 +31,7 @@ class FluctuationType(graphene.ObjectType):
     total_price_diff = graphene.Float()
     date = graphene.Date()
 class Query(graphene.ObjectType):
-    stock_data = graphene.List(StockDataV2Type, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String(), latest=graphene.Boolean())
+    stock_data = graphene.List(StockDataType, start=graphene.String(), end=graphene.String(), symbol=graphene.String(), single_date=graphene.Boolean(), date=graphene.String(), latest=graphene.Boolean())
     instruments = graphene.List(graphene.String)
     top_gainers = graphene.List(StockDataChangeType, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean(), date=graphene.String())
     top_losers = graphene.List(StockDataChangeType, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean())
@@ -40,8 +40,8 @@ class Query(graphene.ObjectType):
     @staticmethod
     def get_total_change(d_1,d_2, instrument):
         try:
-            s = StockDataV2.objects.get(date=d_1.strftime('%Y-%m-%d'), instrument=instrument)
-            e = StockDataV2.objects.get(date=d_2.strftime('%Y-%m-%d'), instrument=instrument)
+            s = StockData.objects.get(date=d_1.strftime('%Y-%m-%d'), instrument=instrument)
+            e = StockData.objects.get(date=d_2.strftime('%Y-%m-%d'), instrument=instrument)
             
             change = e.closing_price - s.closing_price
             print(change)
@@ -51,7 +51,7 @@ class Query(graphene.ObjectType):
     def resolve_changes(self, info, instrument=None, year=None, month=None, week=None):
         # Filtering based on the given instrument, year, month, and week
         try:
-            data = StockDataV2.objects.all()
+            data = StockData.objects.all()
             if instrument is None:
                 raise Exception("Instrument required")
             if instrument:
@@ -86,7 +86,7 @@ class Query(graphene.ObjectType):
             print(e)
             print(traceback.format_exc())
     def resolve_weekly_high_low(self, info, instrument=None, year=None, month=None, start_date=None, end_date=None, n=None):
-        data = StockDataV2.objects.all()
+        data = StockData.objects.all()
 
         # Filter by instrument, year, and month
         if instrument:
@@ -151,10 +151,10 @@ class Query(graphene.ObjectType):
 
         return weekly_high_low_data
     def resolve_stock_data(self, info, start=None, end=None, symbol=None, single_date=False, date=None, latest=False):
-        data = StockDataV2.objects.all()
+        data = StockData.objects.all()
 
         if latest:
-            latest_date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+            latest_date = StockData.objects.aggregate(Max('date'))['date__max']
             data = data.filter(date=latest_date)
 
         if symbol:
@@ -177,12 +177,11 @@ class Query(graphene.ObjectType):
 
         return data
     def resolve_top_gainers(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
-        instruments = StockDataV2.objects.values("instrument").distinct()
+        instruments = StockData.objects.values("instrument").distinct()
         instrument_names = [item["instrument"] for item in instruments]
         instrument_names = list(set(instrument_names))
-        print(instrument_names)
         gaines = []
-        stock_data = StockDataV2.objects.all()
+        stock_data = StockData.objects.all()
         try:
             for instrument in instrument_names:
                 print(instrument)
@@ -236,16 +235,16 @@ class Query(graphene.ObjectType):
             print(e)
             print(traceback.format_exc())
     def resolve_top_losers(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
-        instruments = StockDataV2.objects.values("instrument").distinct()
+        instruments = StockData.objects.values("instrument").distinct()
         instrument_names = [item["instrument"] for item in instruments]
         instrument_names = list(set(instrument_names))
         gaines = []
-        data = StockDataV2.objects.all()
+        data = StockData.objects.all()
         for instrument in instrument_names:
             if not any([day, week, month, year]):
                 raise Exception("Error: Set at least one of the timeframe options (day, week, month, year) to True")
 
-            max_date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+            max_date = StockData.objects.aggregate(Max('date'))['date__max']
             if max_date is None:
                 return []
 
@@ -288,6 +287,6 @@ class Query(graphene.ObjectType):
         print(sorted_gains)
         return sorted_gains
     def resolve_instruments(self, info):
-        instruments = StockDataV2.objects.values("instrument").distinct()
+        instruments = StockData.objects.values("instrument").distinct()
         instrument_names = [item["instrument"] for item in instruments]
         return list(set(instrument_names))
