@@ -5,7 +5,7 @@ from stock_data.models import StockData
 from django.db import models
 from django.db.models.functions import Lag, TruncDate, ExtractWeek, ExtractMonth, ExtractYear, FirstValue
 from django.db.models import F, Value, Window, Min, Max, ExpressionWrapper, fields, OuterRef, Subquery, Q, Sum
-
+import scraper
 from graphene_django import DjangoObjectType
 
 class StockDataType(DjangoObjectType):
@@ -18,7 +18,8 @@ class WeeklyHighLowType(graphene.ObjectType):
     last_record = graphene.String()
     weekly_high = graphene.Float()
     weekly_low = graphene.Float()
-
+class ScraperResultType(graphene.ObjectType):
+    message = graphene.String()
 class StockDataChangeType(graphene.ObjectType):
     instrument = graphene.String()
     start_date = graphene.String()
@@ -37,6 +38,7 @@ class Query(graphene.ObjectType):
     top_losers = graphene.List(StockDataChangeType, n=graphene.Int(), day=graphene.Boolean(), week=graphene.Boolean(), month=graphene.Boolean(), year=graphene.Boolean())
     weekly_high_low = graphene.List(WeeklyHighLowType, instrument=graphene.String(), year=graphene.Int(), month=graphene.Int(), n=graphene.Int())
     changes = graphene.Field(StockDataChangeType, instrument=graphene.String(), year=graphene.Int(), month=graphene.Int(), week=graphene.Int(), n=graphene.Int())
+    update_data = graphene.Field(ScraperResultType)
     @staticmethod
     def get_total_change(d_1,d_2, instrument):
         try:
@@ -48,6 +50,10 @@ class Query(graphene.ObjectType):
             return change
         except Exception as e:
             print(e)
+    def resolve_update_data(self, info):
+        s = scaper.scraper.Scrape()
+        s.run()
+        return {"message": "data updated successfully"}
     def resolve_changes(self, info, instrument=None, year=None, month=None, week=None):
         # Filtering based on the given instrument, year, month, and week
         try:
