@@ -5,7 +5,7 @@ from stock_data.models import StockData
 from django.db import models
 from django.db.models.functions import Lag, TruncDate, ExtractWeek, ExtractMonth, ExtractYear, FirstValue
 from django.db.models import F, Value, Window, Min, Max, ExpressionWrapper, fields, OuterRef, Subquery, Q, Sum
-import scraper
+from scraper import scraper
 from graphene_django import DjangoObjectType
 
 class StockDataType(DjangoObjectType):
@@ -51,7 +51,7 @@ class Query(graphene.ObjectType):
         except Exception as e:
             print(e)
     def resolve_update_data(self, info):
-        s = scraper.scraper.Scrape()
+        s = scraper.Scrape()
         s.run()
         return {"message": "data updated successfully"}
     def resolve_changes(self, info, instrument=None, year=None, month=None, week=None):
