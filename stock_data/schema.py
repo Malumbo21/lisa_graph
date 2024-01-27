@@ -51,7 +51,7 @@ class Query(graphene.ObjectType):
         except Exception as e:
             print(e)
     def resolve_update_data(self, info):
-        s = scaper.scraper.Scrape()
+        s = scraper.scraper.Scrape()
         s.run()
         return {"message": "data updated successfully"}
     def resolve_changes(self, info, instrument=None, year=None, month=None, week=None):
