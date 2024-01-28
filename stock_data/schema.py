@@ -194,7 +194,7 @@ class Query(graphene.ObjectType):
                 if not any([day, week, month, year]):
                     raise Exception("Error: Set at least one of the timeframe options (day, week, month, year) to True")
 
-                max_date = StockDataV2.objects.aggregate(Max('date'))['date__max']
+                max_date = StockData.objects.aggregate(Max('date'))['date__max']
                 if max_date is None:
                     print("Nothing")
                     return []
