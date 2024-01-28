@@ -182,64 +182,58 @@ class Query(graphene.ObjectType):
                 data = data.filter(date__lte=endtime)
 
         return data
-    def resolve_top_gainers(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
+    def resolve_top_gaines(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
         instruments = StockData.objects.values("instrument").distinct()
         instrument_names = [item["instrument"] for item in instruments]
         instrument_names = list(set(instrument_names))
         gaines = []
-        stock_data = StockData.objects.all()
-        try:
-            for instrument in instrument_names:
-                print(instrument)
-                if not any([day, week, month, year]):
-                    raise Exception("Error: Set at least one of the timeframe options (day, week, month, year) to True")
+        data = StockData.objects.all()
+        for instrument in instrument_names:
+            if not any([day, week, month, year]):
+                raise Exception("Error: Set at least one of the timeframe options (day, week, month, year) to True")
 
-                max_date = StockData.objects.aggregate(Max('date'))['date__max']
-                if max_date is None:
-                    print("Nothing")
-                    return []
+            max_date = StockData.objects.aggregate(Max('date'))['date__max']
+            if max_date is None:
+                return []
 
-                data = stock_data.filter(instrument=instrument)
+            data = data.filter(instrument=instrument)
 
-                if day:
-                    data = data.filter(date=max_date)
-                elif week:
-                    start_of_week = max_date - timedelta(days=max_date.weekday())
-                    end_of_week = start_of_week + timedelta(days=6)
-                    data = data.filter(date__range=[start_of_week, end_of_week])
-                elif month:
-                    data = data.filter(date__month=max_date.month, date__year=max_date.year)
-                elif year:
-                    data = data.filter(date__year=max_date.year)
+            if day:
+                data = data.filter(date=max_date)
+            elif week:
+                start_of_week = max_date - timedelta(days=max_date.weekday())
+                end_of_week = start_of_week + timedelta(days=6)
+                data = data.filter(date__range=[start_of_week, end_of_week])
+            elif month:
+                data = data.filter(date__month=max_date.month, date__year=max_date.year)
+            elif year:
+                data = data.filter(date__year=max_date.year)
 
-                if not data.exists():
-                    return []
+            if not data.exists():
+                return []
 
-                grouped_data = data.values('instrument').annotate(
-                    start_date=Min('date'),
-                    end_date=Max('date'),
-                    total_change=ExpressionWrapper(
-                        F('closing_price') - F('opening_price'),
-                        output_field=fields.DecimalField()
-                    )
-                ).order_by('start_date', 'end_date')
-                result = grouped_data.first()
-                
+            grouped_data = data.values('instrument').annotate(
+                start_date=Min('date'),
+                end_date=Max('date'),
+                total_change=ExpressionWrapper(
+                    F('closing_price') - F('opening_price'),
+                    output_field=fields.DecimalField()
+                )
+            ).order_by('start_date', 'end_date')
+            result = grouped_data.first()
+            
 
-                changes_data = {
-                        'instrument': instrument,
-                        'start_date': result['start_date'].strftime('%Y-%m-%d'),
-                        'end_date': result['end_date'].strftime('%Y-%m-%d'),
-                        'total_change': Query.get_total_change(result['start_date'], result['end_date'], instrument),
-                }
-                gaines.append(changes_data)
-            gaines = [g for g in gaines if g['total_change']>0]
-            sorted_gains = sorted(gaines, key=lambda x: x['total_change'], reverse=True)
-            print(sorted_gains)
-            return sorted_gains
-        except Exception as e:
-            print(e)
-            print(traceback.format_exc())
+            changes_data = {
+                    'instrument': instrument,
+                    'start_date': result['start_date'].strftime('%Y-%m-%d'),
+                    'end_date': result['end_date'].strftime('%Y-%m-%d'),
+                    'total_change': Query.get_total_change(result['start_date'], result['end_date'], instrument),
+            }
+            gaines.append(changes_data)
+        gaines = [g for g in gaines if g['total_change']>0]
+        sorted_gains = sorted(gaines, key=lambda x: x['total_change'])
+        print(sorted_gains)
+        return sorted_gains
     def resolve_top_losers(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
         instruments = StockData.objects.values("instrument").distinct()
         instrument_names = [item["instrument"] for item in instruments]
