@@ -182,7 +182,7 @@ class Query(graphene.ObjectType):
                 data = data.filter(date__lte=endtime)
 
         return data
-    def resolve_top_gaines(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
+    def resolve_top_gainers(self, info, n=None, day=False, week=False, month=False, year=False, date=None):
         instruments = StockData.objects.values("instrument").distinct()
         instrument_names = [item["instrument"] for item in instruments]
         instrument_names = list(set(instrument_names))
