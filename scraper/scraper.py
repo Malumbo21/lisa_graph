@@ -21,7 +21,6 @@ class Scrape(object):
 		soup = BeautifulSoup(res.content, "html.parser")
 		pdf_links = soup.find_all('a', href=re.compile(r'\.pdf$'))
 		self.links = [link["href"] for link in pdf_links]
-		self.links = self.links[:3]
 	def fetch_raw_data(self):
 		for link in self.links:
 			res = requests.get(link, stream=True)
