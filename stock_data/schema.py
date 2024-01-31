@@ -1,3 +1,4 @@
+import requests
 import traceback
 import graphene
 from datetime import datetime, timedelta
