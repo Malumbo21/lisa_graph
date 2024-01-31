@@ -25,7 +25,7 @@ class StockDataChangeType(graphene.ObjectType):
     start_date = graphene.String()
     end_date = graphene.String()
     total_change = graphene.Float()
-class ForexType(graphene.ObectType):
+class ForexType(graphene.ObjectType):
     currencyCode = graphene.String()
     buyRate = graphene.Float()
     sellRate = graphene.Float()
