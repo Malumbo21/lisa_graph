@@ -25,7 +25,11 @@ class StockDataChangeType(graphene.ObjectType):
     start_date = graphene.String()
     end_date = graphene.String()
     total_change = graphene.Float()
-
+class ForexType(graphene.ObectType):
+    currencyCode = graphene.String()
+    buyRate = graphene.Float()
+    sellRate = graphene.Float()
+    updated = graphene.String()
 class FluctuationType(graphene.ObjectType):
     id = graphene.Int()
     instrument = graphene.String()
@@ -39,6 +43,7 @@ class Query(graphene.ObjectType):
     weekly_high_low = graphene.List(WeeklyHighLowType, instrument=graphene.String(), year=graphene.Int(), month=graphene.Int(), n=graphene.Int())
     changes = graphene.Field(StockDataChangeType, instrument=graphene.String(), year=graphene.Int(), month=graphene.Int(), week=graphene.Int(), n=graphene.Int())
     update_data = graphene.Field(ScraperResultType)
+    forex_data = graphene.List(ForexType)
     @staticmethod
     def get_total_change(d_1,d_2, instrument):
         try:
@@ -54,6 +59,21 @@ class Query(graphene.ObjectType):
         s = scraper.Scrape()
         s.run()
         return {"message": "data updated successfully"}
+    def resolve_forex_data(self, info):
+        rates = []
+        r = requests.get("https://secure.zanaco.co.zm/vsuite/vnet/web-banking/public/exchangeRates/get")
+        if r.status_code != 200:
+            raise Exception("Error fetching forex data")
+        data = r.json().get("data", [])
+        for entry in data:
+            exchange_rate = {
+                "buyRate": entry.get("buyRate"),
+                "sellRate": entry.get("sellRate"),
+                "currencyCode": entry.get("currencyCode"),
+                "updated": datetime.fromisoformat(entry.get("updated")).strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            rates.append(exchange_rate)
+        return rates
     def resolve_changes(self, info, instrument=None, year=None, month=None, week=None):
         # Filtering based on the given instrument, year, month, and week
         try:
