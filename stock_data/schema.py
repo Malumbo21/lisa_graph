@@ -71,7 +71,7 @@ class Query(graphene.ObjectType):
                 "buyRate": entry.get("buyRate"),
                 "sellRate": entry.get("sellRate"),
                 "currencyCode": entry.get("currencyCode"),
-                "updated": datetime.fromisoformat(entry.get("updated")).strftime("%Y-%m-%d %H:%M:%S"),
+                "updated": str(datetime.fromisoformat(entry.get("updated")).strftime("%Y-%m-%d %H:%M:%S")),
             }
             rates.append(exchange_rate)
         return rates
