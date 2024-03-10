@@ -20,7 +20,7 @@ class StockData(models.Model):
 	trade_volume = models.FloatField()
 	foreign_buys = models.FloatField()
 	foreign_sells = models.FloatField()
-	hash = models.CharField(max_length=255)
+	hash = models.CharField(max_length=255, primary_key=True)
 	date = models.DateField()
 
 	class Meta:
