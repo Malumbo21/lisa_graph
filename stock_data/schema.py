@@ -4,7 +4,7 @@ import graphene
 from datetime import datetime, timedelta
 from stock_data.models import StockData
 from django.db import models
-from django.db.models.functions import Lag, TruncDate, ExtractWeek, ExtractMonth, ExtractYear, FirstValue
+from django.db.models.functions import Cast,Lag, TruncDate, ExtractWeek, ExtractMonth, ExtractYear, FirstValue
 from django.db.models import F, Value, Window, Min, Max, ExpressionWrapper, fields, OuterRef, Subquery, Q, Sum
 from scraper import scraper
 from graphene_django import DjangoObjectType
